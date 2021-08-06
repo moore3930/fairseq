@@ -295,6 +295,7 @@ class TransformerEncoder(FairseqEncoder):
             for i in range(args.encoder_layers)
         ])
 
+        self.pe_layer_norm = LayerNorm(embed_dim)
         if args.encoder_normalize_before:
             self.layer_norm = LayerNorm(embed_dim)
         else:
@@ -345,7 +346,7 @@ class TransformerEncoder(FairseqEncoder):
 
         # init Enhanced-PE
         enhanced_pe = self.embed_positions(src_tokens)
-        enhanced_pe = self.layer_norm(enhanced_pe)
+        enhanced_pe = self.pe_layer_norm(enhanced_pe)
 
         # encoder layers
         for layer in self.layers:
