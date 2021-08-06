@@ -101,6 +101,7 @@ class TransformerEncoderBase(FairseqEncoder):
             self.layer_norm = LayerNorm(embed_dim, export=cfg.export)
         else:
             self.layer_norm = None
+        self.pe_layer_norm = LayerNorm(embed_dim, export=cfg.export)
 
     def build_encoder_layer(self, cfg):
         layer = transformer_layer.TransformerEncoderLayerBase(cfg)
@@ -216,10 +217,16 @@ class TransformerEncoderBase(FairseqEncoder):
         if return_all_hiddens:
             encoder_states.append(x)
 
+        # init enhanced-PE
+        enhanced_pe = self.embed_positions(src_tokens)
+        enhanced_pe = self.pe_layer_norm(enhanced_pe)
+        enhanced_pe = enhanced_pe.transpose(0, 1)
+
         # encoder layers
         for layer in self.layers:
             x = layer(
-                x, encoder_padding_mask=encoder_padding_mask if has_pads else None
+                x, encoder_padding_mask=encoder_padding_mask if has_pads else None,
+                enhanced_pe=enhanced_pe
             )
             if return_all_hiddens:
                 assert encoder_states is not None

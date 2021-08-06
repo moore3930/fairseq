@@ -109,6 +109,7 @@ class TransformerEncoderLayerBase(nn.Module):
         x,
         encoder_padding_mask: Optional[Tensor],
         attn_mask: Optional[Tensor] = None,
+        enhanced_pe: Optional[Tensor] = None,
     ):
         """
         Args:
@@ -158,7 +159,10 @@ class TransformerEncoderLayerBase(nn.Module):
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
         if not self.normalize_before:
-            x = self.final_layer_norm(x)
+            if enhanced_pe is not None
+                x = self.final_layer_norm(x, enhanced_pe)
+            else:
+                x = self.final_layer_norm(x)
         return x
 
 
