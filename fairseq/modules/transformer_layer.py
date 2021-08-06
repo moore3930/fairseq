@@ -159,7 +159,7 @@ class TransformerEncoderLayerBase(nn.Module):
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
         if not self.normalize_before:
-            if enhanced_pe is not None
+            if enhanced_pe is not None:
                 x = self.final_layer_norm(x, enhanced_pe)
             else:
                 x = self.final_layer_norm(x)
