@@ -304,9 +304,9 @@ class TransformerEncoder(FairseqEncoder):
     def forward_embedding(self, src_tokens):
         # embed tokens and positions
         embed = self.embed_scale * self.embed_tokens(src_tokens)
-        if self.embed_positions is not None:
-            x = embed + self.embed_positions(src_tokens)
-        x = F.dropout(x, p=self.dropout, training=self.training)
+        # if self.embed_positions is not None:
+        #     x = embed + self.embed_positions(src_tokens)
+        x = F.dropout(embed, p=self.dropout, training=self.training)
         return x, embed
 
     def forward(self, src_tokens, src_lengths, cls_input=None, return_all_hiddens=False):
