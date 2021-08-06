@@ -345,7 +345,7 @@ class TransformerEncoder(FairseqEncoder):
 
         # init Enhanced-PE
         enhanced_pe = self.embed_positions(src_tokens)
-        enhanced_pe = LayerNorm(enhanced_pe)
+        enhanced_pe = self.layer_norm(enhanced_pe)
 
         # encoder layers
         for layer in self.layers:
