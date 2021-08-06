@@ -343,8 +343,15 @@ class TransformerEncoder(FairseqEncoder):
 
         encoder_states = [] if return_all_hiddens else None
 
+        # init Enhanced-PE
+        enhanced_pe = self.embed_positions(src_tokens)
+        enhanced_pe = LayerNorm(enhanced_pe)
+
         # encoder layers
         for layer in self.layers:
+            # Enhanced-PE
+            x = x + enhanced_pe
+
             x = layer(x, encoder_padding_mask)
             if return_all_hiddens:
                 encoder_states.append(x)
