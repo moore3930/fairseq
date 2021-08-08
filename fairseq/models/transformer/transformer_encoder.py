@@ -223,10 +223,16 @@ class TransformerEncoderBase(FairseqEncoder):
         enhanced_pe = enhanced_pe.transpose(0, 1)
 
         # encoder layers
-        for layer in self.layers:
+        layers_cnt = len(self.layers)
+        for idx, layer in enumerate(self.layers):
+            is_last_layer = False
+            if layers_cnt == idx + 1:
+                is_last_layer = True
+
             x = layer(
                 x, encoder_padding_mask=encoder_padding_mask if has_pads else None,
-                enhanced_pe=enhanced_pe
+                enhanced_pe=enhanced_pe,
+                is_last_layer=is_last_layer
             )
             if return_all_hiddens:
                 assert encoder_states is not None
