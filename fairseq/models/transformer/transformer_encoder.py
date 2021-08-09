@@ -97,6 +97,7 @@ class TransformerEncoderBase(FairseqEncoder):
         )
         self.num_layers = len(self.layers)
 
+        self.pe_layer_norm = LayerNorm(embed_dim)
         if cfg.encoder.normalize_before:
             self.layer_norm = LayerNorm(embed_dim, export=cfg.export)
         else:
@@ -121,8 +122,7 @@ class TransformerEncoderBase(FairseqEncoder):
         if token_embedding is None:
             token_embedding = self.embed_tokens(src_tokens)
         x = embed = self.embed_scale * token_embedding
-        if self.embed_positions is not None:
-            x = embed + self.embed_positions(src_tokens)
+
         if self.layernorm_embedding is not None:
             x = self.layernorm_embedding(x)
         x = self.dropout_module(x)
@@ -211,6 +211,11 @@ class TransformerEncoderBase(FairseqEncoder):
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
 
+        # init Enhanced-PE
+        enhanced_pe = self.embed_positions(src_tokens)
+        enhanced_pe = self.pe_layer_norm(enhanced_pe)
+        enhanced_pe = enhanced_pe.transpose(0, 1)
+
         encoder_states = []
 
         if return_all_hiddens:
@@ -218,6 +223,9 @@ class TransformerEncoderBase(FairseqEncoder):
 
         # encoder layers
         for layer in self.layers:
+            # enhanced-PE
+            x = x + enhanced_pe
+
             x = layer(
                 x, encoder_padding_mask=encoder_padding_mask if has_pads else None
             )
