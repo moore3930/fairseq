@@ -214,6 +214,7 @@ class TransformerEncoderBase(FairseqEncoder):
         # init Enhanced-PE
         enhanced_pe = self.embed_positions(src_tokens)
         enhanced_pe = self.pe_layer_norm(enhanced_pe)
+        enhanced_pe = self.dropout_module(enhanced_pe)
         enhanced_pe = enhanced_pe.transpose(0, 1)
 
         encoder_states = []
