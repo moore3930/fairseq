@@ -223,9 +223,10 @@ class TransformerEncoderBase(FairseqEncoder):
             encoder_states.append(x)
 
         # encoder layers
+        layers_cnt = len(self.layers)
         for layer in self.layers:
             # enhanced-PE
-            x = x + enhanced_pe
+            x = x + (1.0 / layers_cnt) * enhanced_pe
 
             x = layer(
                 x, encoder_padding_mask=encoder_padding_mask if has_pads else None
