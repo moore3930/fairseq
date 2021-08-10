@@ -118,7 +118,7 @@ class TransformerEncoderBase(FairseqEncoder):
     def forward_embedding(
         self, src_tokens, token_embedding: Optional[torch.Tensor] = None
     ):
-        # embed tokens and positions
+        # embed tokens
         if token_embedding is None:
             token_embedding = self.embed_tokens(src_tokens)
         x = embed = self.embed_scale * token_embedding
@@ -224,9 +224,11 @@ class TransformerEncoderBase(FairseqEncoder):
 
         # encoder layers
         layers_cnt = len(self.layers)
-        for layer in self.layers:
+        layer_pe_weight = torch.tensor([1.0 / layers_cnt] * layers_cnt, requires_grad=True)
+
+        for idx, layer in enumerate(self.layers):
             # enhanced-PE
-            x = x + (1.0 / layers_cnt) * enhanced_pe
+            x = x + layer_pe_weight[idx] * enhanced_pe
 
             x = layer(
                 x, encoder_padding_mask=encoder_padding_mask if has_pads else None
