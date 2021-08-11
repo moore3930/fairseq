@@ -225,6 +225,7 @@ class TransformerEncoderBase(FairseqEncoder):
         # encoder layers
         layers_cnt = len(self.layers)
         layer_pe_weight = torch.tensor([1.0 / layers_cnt] * layers_cnt, requires_grad=True)
+        layer_pe_weight = torch.nn.functional.normalize(layer_pe_weight, p=2, dim=0)
 
         for idx, layer in enumerate(self.layers):
             # enhanced-PE
