@@ -95,19 +95,16 @@ class TransformerEncoderBase(FairseqEncoder):
         self.layers.extend(
             [self.build_encoder_layer(cfg) for i in range(cfg.encoder.layers)]
         )
-        self.num_layers = len(self.layers)
 
-        self.pe_layer_norm = LayerNorm(embed_dim)
         if cfg.encoder.normalize_before:
             self.layer_norm = LayerNorm(embed_dim, export=cfg.export)
         else:
             self.layer_norm = None
 
         # enhanced-PE weights
-        # layers_cnt = len(self.layers)
-        # layer_pe_weight = torch.tensor([1.0 / layers_cnt] * layers_cnt, requires_grad=True)
-        # layer_pe_weight = torch.nn.functional.normalize(layer_pe_weight, p=2, dim=0)
         self.layer_pe_weight = torch.nn.Parameter(torch.tensor([0.4082] * 6), requires_grad=True)
+        self.num_layers = len(self.layers)
+        self.pe_layer_norms = [LayerNorm(embed_dim) for _ in range(self.num_layers)]
 
     def build_encoder_layer(self, cfg):
         layer = transformer_layer.TransformerEncoderLayerBase(cfg)
@@ -221,8 +218,6 @@ class TransformerEncoderBase(FairseqEncoder):
 
         # init Enhanced-PE
         enhanced_pe = self.embed_positions(src_tokens)
-        enhanced_pe = self.pe_layer_norm(enhanced_pe)
-        enhanced_pe = self.dropout_module(enhanced_pe)
         enhanced_pe = enhanced_pe.transpose(0, 1)
 
         encoder_states = []
@@ -235,6 +230,7 @@ class TransformerEncoderBase(FairseqEncoder):
         for idx, layer in enumerate(self.layers):
             # enhanced-PE
             x = x + layer_pe_weight[idx] * enhanced_pe
+            x = self.pe_layer_norms[idx](x)
 
             x = layer(
                 x, encoder_padding_mask=encoder_padding_mask if has_pads else None
