@@ -328,6 +328,10 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
 
+        # init Enhanced-PE
+        enhanced_pe = self.embed_positions(prev_output_tokens, incremental_state=incremental_state)
+        enhanced_pe = enhanced_pe.transpose(0, 1)
+
         self_attn_padding_mask: Optional[Tensor] = None
         if self.cross_self_attention or prev_output_tokens.eq(self.padding_idx).any():
             self_attn_padding_mask = prev_output_tokens.eq(self.padding_idx)
@@ -342,7 +346,7 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
                 self_attn_mask = self.buffered_future_mask(x)
             else:
                 self_attn_mask = None
-            x += layer_pe_weight[idx] * positions
+            x += layer_pe_weight[idx] * enhanced_pe
 
             x, layer_attn, _ = layer(
                 x,
