@@ -233,7 +233,6 @@ class TransformerEncoderBase(FairseqEncoder):
         for idx, layer in enumerate(self.layers):
             # enhanced-PE
             x = x + layer_pe_weight[idx] * enhanced_pe
-            print(self.layer_pe_weight)
 
             x = layer(
                 x, encoder_padding_mask=encoder_padding_mask if has_pads else None
