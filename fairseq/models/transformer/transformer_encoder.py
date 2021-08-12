@@ -107,7 +107,7 @@ class TransformerEncoderBase(FairseqEncoder):
         # layers_cnt = len(self.layers)
         # layer_pe_weight = torch.tensor([1.0 / layers_cnt] * layers_cnt, requires_grad=True)
         # layer_pe_weight = torch.nn.functional.normalize(layer_pe_weight, p=2, dim=0)
-        self.layer_pe_weight = torch.nn.Parameter([0.4082] * 6, requires_grad=True)
+        self.layer_pe_weight = torch.nn.Parameter(torch.tensor([0.4082] * 6), requires_grad=True)
 
     def build_encoder_layer(self, cfg):
         layer = transformer_layer.TransformerEncoderLayerBase(cfg)
