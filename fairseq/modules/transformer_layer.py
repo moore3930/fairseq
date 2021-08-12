@@ -247,6 +247,7 @@ class TransformerDecoderLayerBase(nn.Module):
         )
 
         self.final_layer_norm = LayerNorm(self.embed_dim, export=cfg.export)
+        self.first_layer_norm = LayerNorm(self.embed_dim, export=cfg.export)
         self.need_attn = True
 
         self.onnx_trace = False
@@ -315,6 +316,7 @@ class TransformerDecoderLayerBase(nn.Module):
         Returns:
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
+        x = self.first_layer_norm(x)
         if need_head_weights:
             need_attn = True
 

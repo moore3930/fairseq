@@ -138,6 +138,10 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
         if self.output_projection is None:
             self.build_output_projection(cfg, dictionary, embed_tokens)
 
+        # enhanced-PE weights
+        self.layer_pe_weight = torch.nn.Parameter(torch.tensor([0.4082] * 6), requires_grad=True)
+        self.num_layers = len(self.layers)
+
     def build_output_projection(self, cfg, dictionary, embed_tokens):
         if cfg.adaptive_softmax_cutoff is not None:
             self.adaptive_softmax = AdaptiveSoftmax(
@@ -328,6 +332,8 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
         if self.cross_self_attention or prev_output_tokens.eq(self.padding_idx).any():
             self_attn_padding_mask = prev_output_tokens.eq(self.padding_idx)
 
+        layer_pe_weight = torch.nn.functional.normalize(self.layer_pe_weight, p=2, dim=0)
+
         # decoder layers
         attn: Optional[Tensor] = None
         inner_states: List[Optional[Tensor]] = [x]
@@ -336,6 +342,7 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
                 self_attn_mask = self.buffered_future_mask(x)
             else:
                 self_attn_mask = None
+            x += layer_pe_weight[idx] * positions
 
             x, layer_attn, _ = layer(
                 x,
