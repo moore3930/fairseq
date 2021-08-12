@@ -103,6 +103,11 @@ class TransformerEncoderBase(FairseqEncoder):
         else:
             self.layer_norm = None
 
+        # encoder layers
+        layers_cnt = len(self.layers)
+        layer_pe_weight = torch.tensor([1.0 / layers_cnt] * layers_cnt, requires_grad=True)
+        self.layer_pe_weight = torch.nn.functional.normalize(layer_pe_weight, p=2, dim=0)
+
     def build_encoder_layer(self, cfg):
         layer = transformer_layer.TransformerEncoderLayerBase(cfg)
         checkpoint = cfg.checkpoint_activations
@@ -222,14 +227,10 @@ class TransformerEncoderBase(FairseqEncoder):
         if return_all_hiddens:
             encoder_states.append(x)
 
-        # encoder layers
-        layers_cnt = len(self.layers)
-        layer_pe_weight = torch.tensor([1.0 / layers_cnt] * layers_cnt, requires_grad=True)
-        layer_pe_weight = torch.nn.functional.normalize(layer_pe_weight, p=2, dim=0)
-
         for idx, layer in enumerate(self.layers):
             # enhanced-PE
-            x = x + layer_pe_weight[idx] * enhanced_pe
+            x = x + self.layer_pe_weight[idx] * enhanced_pe
+            print(self.layer_pe_weight)
 
             x = layer(
                 x, encoder_padding_mask=encoder_padding_mask if has_pads else None
