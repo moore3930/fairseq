@@ -66,6 +66,7 @@ class TransformerEncoderLayerBase(nn.Module):
         )
 
         self.final_layer_norm = LayerNorm(self.embed_dim, export=cfg.export)
+        self.first_layer_norm = LayerNorm(self.embed_dim, export=cfg.export)
 
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(
@@ -130,6 +131,8 @@ class TransformerEncoderLayerBase(nn.Module):
         # Note that we cannot use -inf here, because at some edge cases,
         # the attention weight (before softmax) for some padded element in query
         # will become -inf, which results in NaN in model parameters
+        x = self.first_layer_norm(x)
+
         if attn_mask is not None:
             attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
 

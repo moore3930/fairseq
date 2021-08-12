@@ -104,7 +104,7 @@ class TransformerEncoderBase(FairseqEncoder):
         # enhanced-PE weights
         self.layer_pe_weight = torch.nn.Parameter(torch.tensor([0.4082] * 6), requires_grad=True)
         self.num_layers = len(self.layers)
-        self.pe_layer_norms = [LayerNorm(embed_dim, export=cfg.export) for _ in range(self.num_layers)]
+        # self.pe_layer_norms = [LayerNorm(embed_dim, export=cfg.export) for _ in range(self.num_layers)]
 
     def build_encoder_layer(self, cfg):
         layer = transformer_layer.TransformerEncoderLayerBase(cfg)
@@ -230,7 +230,6 @@ class TransformerEncoderBase(FairseqEncoder):
         for idx, layer in enumerate(self.layers):
             # enhanced-PE
             x = x + layer_pe_weight[idx] * enhanced_pe
-            x = self.pe_layer_norms[idx](x)
 
             x = layer(
                 x, encoder_padding_mask=encoder_padding_mask if has_pads else None
