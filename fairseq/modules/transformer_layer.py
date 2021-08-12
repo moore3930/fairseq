@@ -108,6 +108,7 @@ class TransformerEncoderLayerBase(nn.Module):
     def forward(
         self,
         x,
+        layer_idx,
         encoder_padding_mask: Optional[Tensor],
         attn_mask: Optional[Tensor] = None,
     ):
@@ -131,7 +132,8 @@ class TransformerEncoderLayerBase(nn.Module):
         # Note that we cannot use -inf here, because at some edge cases,
         # the attention weight (before softmax) for some padded element in query
         # will become -inf, which results in NaN in model parameters
-        x = self.first_layer_norm(x)
+        if layer_idx != 0:
+            x = self.first_layer_norm(x)
 
         if attn_mask is not None:
             attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
@@ -160,8 +162,6 @@ class TransformerEncoderLayerBase(nn.Module):
         x = self.fc2(x)
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
-        if not self.normalize_before:
-            x = self.final_layer_norm(x)
         return x
 
 
