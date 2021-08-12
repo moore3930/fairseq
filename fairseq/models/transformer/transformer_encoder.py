@@ -228,9 +228,11 @@ class TransformerEncoderBase(FairseqEncoder):
         if return_all_hiddens:
             encoder_states.append(x)
 
+        layer_pe_weight = torch.nn.functional.normalize(self.layer_pe_weight, p=2, dim=0)
+
         for idx, layer in enumerate(self.layers):
             # enhanced-PE
-            x = x + self.layer_pe_weight[idx] * enhanced_pe
+            x = x + layer_pe_weight[idx] * enhanced_pe
             print(self.layer_pe_weight)
 
             x = layer(
