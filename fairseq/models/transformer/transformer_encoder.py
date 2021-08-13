@@ -229,17 +229,19 @@ class TransformerEncoderBase(FairseqEncoder):
 
         for idx, layer in enumerate(self.layers):
             # enhanced-PE
-            x = x + layer_pe_weight[idx] * enhanced_pe
+            if idx != 0:
+                x = x + layer_pe_weight[idx] * enhanced_pe
 
             x = layer(
-                x, encoder_padding_mask=encoder_padding_mask if has_pads else None
+                x, idx,
+                encoder_padding_mask=encoder_padding_mask if has_pads else None
             )
             if return_all_hiddens:
                 assert encoder_states is not None
                 encoder_states.append(x)
 
-        if self.layer_norm is not None:
-            x = self.layer_norm(x)
+        # for algo7
+        x = self.layer_norm(x)
 
         # The Pytorch Mobile lite interpreter does not supports returning NamedTuple in
         # `forward` so we use a dictionary instead.
