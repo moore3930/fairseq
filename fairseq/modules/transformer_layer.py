@@ -108,6 +108,7 @@ class TransformerEncoderLayerBase(nn.Module):
     def forward(
         self,
         x,
+        layer_idx,
         encoder_padding_mask: Optional[Tensor],
         attn_mask: Optional[Tensor] = None,
     ):
@@ -131,7 +132,8 @@ class TransformerEncoderLayerBase(nn.Module):
         # Note that we cannot use -inf here, because at some edge cases,
         # the attention weight (before softmax) for some padded element in query
         # will become -inf, which results in NaN in model parameters
-        x = self.first_layer_norm(x)
+        if layer_idx != 0:
+            x = self.first_layer_norm(x)
 
         if attn_mask is not None:
             attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
@@ -160,8 +162,6 @@ class TransformerEncoderLayerBase(nn.Module):
         x = self.fc2(x)
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
-        if not self.normalize_before:
-            x = self.final_layer_norm(x)
         return x
 
 
@@ -247,8 +247,6 @@ class TransformerDecoderLayerBase(nn.Module):
         )
 
         self.final_layer_norm = LayerNorm(self.embed_dim, export=cfg.export)
-        self.first_layer_norm = LayerNorm(self.embed_dim, export=cfg.export)
-
         self.need_attn = True
 
         self.onnx_trace = False
@@ -294,7 +292,6 @@ class TransformerDecoderLayerBase(nn.Module):
     def forward(
         self,
         x,
-        layer_idx,
         encoder_out: Optional[torch.Tensor] = None,
         encoder_padding_mask: Optional[torch.Tensor] = None,
         incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
@@ -318,9 +315,6 @@ class TransformerDecoderLayerBase(nn.Module):
         Returns:
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
-        if layer_idx != 0:
-            x = self.first_layer_norm(x)
-
         if need_head_weights:
             need_attn = True
 
@@ -415,6 +409,8 @@ class TransformerDecoderLayerBase(nn.Module):
         x = self.fc2(x)
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
+        if not self.normalize_before:
+            x = self.final_layer_norm(x)
         if self.onnx_trace and incremental_state is not None:
             saved_state = self.self_attn._get_input_buffer(incremental_state)
             assert saved_state is not None
